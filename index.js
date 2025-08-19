@@ -1,21 +1,31 @@
-const net = require("net");
+import express from "express";
+import fetch from "node-fetch";
 
-// Create TCP server
-const server = net.createServer(socket => {
-  console.log("Tracker connected:", socket.remoteAddress);
+const app = express();
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-  socket.on("data", data => {
-    console.log("Raw JT808 data:", data.toString("hex")); // hex dump
-  });
+// This is the endpoint your GPS trackers will send data to
+app.post("/gps", async (req, res) => {
+  try {
+    console.log("Tracker sent data:", req.body);
 
-  socket.on("close", () => {
-    console.log("Tracker disconnected");
-  });
+    // Forward to your Heroku API
+    const response = await fetch("https://axistify-backend-35fba6c65504.herokuapp.com/api/webhook/gps-location", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(req.body)
+    });
+
+    const result = await response.text();
+    console.log("Heroku response:", result);
+
+    res.status(200).json({ status: "forwarded", heroku: result });
+  } catch (error) {
+    console.error("Relay error:", error);
+    res.status(500).json({ error: "Relay failed" });
+  }
 });
 
-// Railway provides PORT in env, default 8080
-const PORT = process.env.PORT || 8080;
-
-server.listen(PORT, () => {
-  console.log(`JT808 TCP server listening on port ${PORT}`);
-});
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Relay running on port ${PORT}`));
