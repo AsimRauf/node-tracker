@@ -1,11 +1,21 @@
-const express = require("express");
-const app = express();
+const net = require("net");
 
-app.use(express.text()); // X1 tracker sends raw text
-app.post("/gps", (req, res) => {
-  console.log("Tracker Data:", req.body);
-  res.send("OK");
+// Create TCP server
+const server = net.createServer(socket => {
+  console.log("Tracker connected:", socket.remoteAddress);
+
+  socket.on("data", data => {
+    console.log("Raw JT808 data:", data.toString("hex")); // hex dump
+  });
+
+  socket.on("close", () => {
+    console.log("Tracker disconnected");
+  });
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// Railway provides PORT in env, default 8080
+const PORT = process.env.PORT || 8080;
+
+server.listen(PORT, () => {
+  console.log(`JT808 TCP server listening on port ${PORT}`);
+});
