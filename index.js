@@ -1,21 +1,22 @@
-import express from "express";
-import fetch from "node-fetch";
+const express = require("express");
+const fetch = require("node-fetch");
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// This is the endpoint your GPS trackers will send data to
 app.post("/gps", async (req, res) => {
   try {
     console.log("Tracker sent data:", req.body);
 
-    // Forward to your Heroku API
-    const response = await fetch("https://axistify-backend-35fba6c65504.herokuapp.com/api/webhook/gps-location", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(req.body)
-    });
+    const response = await fetch(
+      "https://axistify-backend-35fba6c65504.herokuapp.com/api/webhook/gps-location",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(req.body)
+      }
+    );
 
     const result = await response.text();
     console.log("Heroku response:", result);
